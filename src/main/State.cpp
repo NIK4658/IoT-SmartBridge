@@ -52,14 +52,34 @@ void State::updateLCD(){
 }
 
 void State::updateValve(){
-  int value=map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
-  Serial.println(String(this->sonar->getLastDistance()*100));
-  Serial.println(value);
-  motor->on();
+  //int value = map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
+  /*
+  if(this->manualOperations==true && this->manualMode==true){
+    value=map(analogRead(A2), 0, 1023, this->maxValve, this->minValve);
+  }else{
+    value=map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
+  }
+  */
+
+  //Serial.println(String(this->sonar->getLastDistance()*100));
+  //Serial.println(value);
+
+  //motor->on();
+  //for (int i = 0; i < 50; i++) {
+    //Serial.println(pos);
+  //motor->setPosition(90);     
+  //delay(50);            
+    //pos += delta;
+  //}
+  //if()
+  //motor->off();
+
+
+  //motor->on();
   //for (int i = 0; i < 180; i++) {
      //motor->setPosition(value);
   //}           
-  motor->off();
+  //motor->off();
 }
 
 void State::updateLeds(){
@@ -104,7 +124,5 @@ void State::tick(){
     if(this->minValve!=this->maxValve){
       this->updateValve();      
     }
-  }else{
-    Task::setActive(false);
   }
 }

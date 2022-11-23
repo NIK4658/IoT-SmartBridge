@@ -11,6 +11,7 @@
 #include "ServoMotor.h"
 #include "LCD.h"
 #include "LightTask.h"
+#include "ServoTimer2.h"
 
 //Definizioni PINS
 
@@ -24,7 +25,7 @@
 #define BTN 7 	//Manual mode
 #define SonarTrig 13 //Sonar trig
 #define SonarEcho 12 //Sonar echo
-#define Motor A1 //Servo Motor (Valve)
+#define Motor 9 //Servo Motor (Valve)
 
 //Definizioni Costanti
 
@@ -33,10 +34,11 @@
 #define WL_1 0.6	//Water level normal (DA DEFINIRE)
 #define WL_2 0.4	//Water level pre alarm (DA DEFINIRE)
 #define WL_MAX 0.01	//Water level alarm (DA DEFINIRE)
+#define WL_MIN 30	//Water level alarm (DA DEFINIRE)
 
-#define PE_Normal 1000 	//Sampling Rate Water level Normal (DA DEFINIRE)
-#define PE_PreAlarm 500	//Sampling Rate Water level PreAlarm (DA DEFINIRE)
-#define PE_Alarm 300	//Sampling Rate Water level Alarm (DA DEFINIRE)
+#define PE_Normal 2000 	//Sampling Rate Water level Normal (DA DEFINIRE)
+#define PE_PreAlarm 1000	//Sampling Rate Water level PreAlarm (DA DEFINIRE)
+#define PE_Alarm 750	//Sampling Rate Water level Alarm (DA DEFINIRE)
 
 
 //Definizione Variabili
@@ -60,6 +62,8 @@ void setup()
   lcd = new LCD();
   lcd->init();
 
+  ServoTimer2* motor2 = new ServoTimer2();
+
   
   //Setup
   Serial.begin(9600);
@@ -70,7 +74,7 @@ void setup()
   Task* lights = new LightTask(pir, pedestrianLed, ls, TH_L);
   lights->init(500);
 
-  Task* normalState = new State(String("Normal"), bridgeGreen, bridgeRed, sonar, motor, lcd, false, false, 1, 0, WL_1, 30, 10, 1, 0, 0);
+  Task* normalState = new State(String("Normal"), bridgeGreen, bridgeRed, sonar, motor, lcd, false, false, 1, 0, WL_1, WL_MIN, 10, 1, 0, 0);
   normalState->init(PE_Normal);
 
   Task* preAlarmState = new State(String("PreAlarm"), bridgeGreen, bridgeRed, sonar, motor, lcd, true, false, 1, 2000, WL_2, WL_1, 10, 1, 0, 0);
@@ -134,8 +138,8 @@ void loop()
   lcd->setON(false);
   */
 
-
 /*
+
   if(digitalRead(7)==HIGH){
     motor->off();
   }
@@ -149,10 +153,11 @@ void loop()
     delay(30);            
     motor->off();
     lcd->setState(String(pos));
-    */
+  
   //}
   //motor->off();
 
+*/
   //delay(1000);
 
   
