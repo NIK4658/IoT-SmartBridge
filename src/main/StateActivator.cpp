@@ -30,12 +30,12 @@ void StateActivator::tick(){
     this->lights->turnLedOff();
   }
 
+/*
   Serial.print("Normal:");
   Serial.println(this->states[0]->isActive());
   Serial.print("Prealarm:");
   Serial.println(this->states[1]->isActive());
   Serial.print("Alarm:");
   Serial.println(this->states[2]->isActive());
-
-
+*/
 }

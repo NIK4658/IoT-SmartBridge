@@ -8,7 +8,7 @@
 #include "StateActivator.h"
 #include "Pir.h"
 #include "LightSensor.h"
-#include "ServoMotor.h"
+#include "ServoTimer2.h"
 #include "LCD.h"
 #include "LightTask.h"
 #include "ServoTimer2.h"
@@ -45,7 +45,7 @@
 Scheduler sched;
 
 LCD* lcd;
-ServoMotor* motor;
+ServoTimer2* motor;
 
 void setup()
 {
@@ -55,14 +55,15 @@ void setup()
   Pir* pir = new Pir(PIR);
   //Pot potentiometer = new Pot(POT);
   //button btn = new Button(8);
-  motor = new ServoMotor(Motor);
+  //motor = new ServoMotor(Motor);
   Led* pedestrianLed = new Led(ledA);
   Led* bridgeGreen = new Led(ledB);
   Led* bridgeRed = new Led(ledC);
   lcd = new LCD();
   lcd->init();
 
-  ServoTimer2* motor2 = new ServoTimer2();
+  motor = new ServoTimer2();
+  motor->attach(Motor);
 
   
   //Setup
@@ -91,11 +92,14 @@ void setup()
   sched.addTask(normalState);
   sched.addTask(preAlarmState);
   sched.addTask(alarmState);
+
 }
 
 void loop() 
 {
   sched.schedule();
+
+  //motor->write(i);
   //motor->setPosition()
   //lcd->setState("Normal");
   //Serial.println(digitalRead(7));
@@ -143,21 +147,40 @@ void loop()
   if(digitalRead(7)==HIGH){
     motor->off();
   }
+  */
   //int pos=analogRead(POT);
   //while(digitalRead(7)==HIGH){
-    motor->on();
+    
+    /*
     int pos = map(analogRead(A2), 0, 1023, 0, 179);
     Serial.println(pos);
-    motor->setPosition(pos);     
+    if(digitalRead(7)==HIGH){
+      motor->write(pos);  
+    }
+
+    for (int i = 0; i < 180; i++) {
     
-    delay(30);            
-    motor->off();
-    lcd->setState(String(pos));
+    }
+
+    motor->write(750);
+    delay(1000);
+    motor->write(1000);
+    delay(1000);
+    motor->write(1200);
+    delay(1000);
+*/
+
+    //
+    //delay(100);   
+    
+    //delay(30);            
+    //motor->off();
+    //lcd->setState(String(pos));
   
   //}
   //motor->off();
 
-*/
+
   //delay(1000);
 
   

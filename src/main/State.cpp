@@ -3,7 +3,7 @@
 #include "Arduino.h"
 
 
-State::State(String name, Led* green, Led* red, Sonar* sonar, ServoMotor* motor, LCD* lcd, bool showLCD, bool showValve, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, int waterSamplingRate, int manualOperations, int minValve, int maxValve){
+State::State(String name, Led* green, Led* red, Sonar* sonar, ServoTimer2* motor, LCD* lcd, bool showLCD, bool showValve, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, int waterSamplingRate, int manualOperations, int minValve, int maxValve){
   this->name = name;
   this->green = green;
   this->red = red;
@@ -46,40 +46,19 @@ void State::updateLCD(){
     this->lcd->setWaterLevel(this->sonar->getLastDistance());
     this->lcd->setState(this->name);
     if(this->showValve){
-      this->lcd->setValve(motor->getAngle());
+      //this->lcd->setValve(motor->getAngle());
     }
   }
 }
 
 void State::updateValve(){
-  //int value = map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
-  /*
-  if(this->manualOperations==true && this->manualMode==true){
-    value=map(analogRead(A2), 0, 1023, this->maxValve, this->minValve);
-  }else{
-    value=map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
-  }
-  */
-
+  int value=map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
+  value=map(analogRead(A2), 0, 1023, this->maxValve, this->minValve);
   //Serial.println(String(this->sonar->getLastDistance()*100));
-  //Serial.println(value);
-
-  //motor->on();
-  //for (int i = 0; i < 50; i++) {
-    //Serial.println(pos);
-  //motor->setPosition(90);     
-  //delay(50);            
-    //pos += delta;
-  //}
-  //if()
-  //motor->off();
-
-
-  //motor->on();
-  //for (int i = 0; i < 180; i++) {
-     //motor->setPosition(value);
-  //}           
-  //motor->off();
+  Serial.println(value);
+  float coeff = (2250.0-750.0)/180;
+  Serial.println(motor->read());
+  motor->write(750 + value*coeff);  
 }
 
 void State::updateLeds(){
