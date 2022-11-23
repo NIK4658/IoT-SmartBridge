@@ -9,6 +9,10 @@
 #include "Pir.h"
 #include "LightSensor.h"
 #include "ServoMotor.h"
+#include "LCD.h"
+#include "LightTask.h"
+
+#include <LiquidCrystal_I2C.h> 
 
 //Definizioni PINS
 
@@ -31,9 +35,9 @@
 #define WL_2 200	//Water level pre alarm (DA DEFINIRE)
 #define WL_MAX 300	//Water level alarm (DA DEFINIRE)
 
-#define PE_Normal 1000 	//Sampling Rate Water level Normal (DA DEFINIRE)
-#define PE_PreAlarm 750	//Sampling Rate Water level PreAlarm (DA DEFINIRE)
-#define PE_Alarm 500	//Sampling Rate Water level Alarm (DA DEFINIRE)
+#define PE_Normal 500 	//Sampling Rate Water level Normal (DA DEFINIRE)
+#define PE_PreAlarm 350	//Sampling Rate Water level PreAlarm (DA DEFINIRE)
+#define PE_Alarm 200	//Sampling Rate Water level Alarm (DA DEFINIRE)
 
 
 //Definizione Variabili
@@ -47,31 +51,43 @@ Pir* pir;
 LightSensor* ls;
 Led* green;
 Led* red;
+Led* people;
 ServoMotor* motor;
 int pos;
 int delta;
 
+LCD* lcd;
+
+Task* newTask;
+
+int manualenabled=0;
+
+//LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27,20,4);
+
 void setup()
 {
   Serial.begin(9600);
-  sched.init(100);
+  sched.init(250);
 
   //Task* lights = new LightTask(pin);
   //lights->init(500);
 
   green = new Led(3);
   red = new Led(4);
+  people = new Led(2);
 
-  sonar = new Sonar(9,8);
+  sonar = new Sonar(13,12);
 
+  newTask = new LightTask(); 
+  newTask->init(500);
 
-  normalState = new State(green, red, sonar, 0, 0, 0, 0.1, 10, 1);
+  normalState = new State(green, red, sonar, 1, 2000, 0, 40, 10, 1);
   normalState->init(PE_Normal);
 
-  preAlarmState = new State(green, red, sonar, 0, 1, 0.1, 0.2, 10, 1);
+  preAlarmState = new State(green, red, sonar, 0, 1, 100, 150, 10, 1);
   preAlarmState->init(PE_PreAlarm);
 
-  alarmState = new State(green, red, sonar, 1, 1, 0.2, 30, 10, 1);
+  alarmState = new State(green, red, sonar, 1, 1, 151, 300, 10, 1);
   alarmState->init(PE_Alarm);
 
 
@@ -80,38 +96,96 @@ void setup()
   StateActivatorr->init(100);
 
   //sched.addTask(lights);
-  //sched.addTask(StateActivatorr);
-  //sched.addTask(normalState);
+  sched.addTask(StateActivatorr);
+  sched.addTask(normalState);
+  //sched.addTask(newTask);
   //sched.addTask(preAlarmState);
   //sched.addTask(alarmState);
 
-  ls = new LightSensor(A0);
-  pir = new Pir(8);
+  //ls = new LightSensor(A0);
+  //pir = new Pir(8);
 
   motor = new ServoMotor(A1);
 
   pos = 0;
   delta = 1;
   
+  lcd = new LCD();
+  //lcd->init();
+
+  lcd->init();
+  //lcd.backlight();
 }
 
 void loop()
 {
+  
   //sched.schedule();
+  Serial.println(digitalRead(7));
 
-  delay(150);
+  /*
+  if(digitalRead(7)==HIGH){
+    manualenabled=1;
+  }else{
+    manualenabled=0;
+  }
+  */
 
-  motor->on();
-  for (int i = 0; i < 180; i++) {
+  //Serial.println(digitalRead(5));
+  //lcd->setState("Normal");
+
+  //people->switchOn();
+
+  /*
+  delay(1000);
+  lcd.setCursor(1, 1);
+  lcd.print("Status: Normal");
+  delay(1000);
+  lcd.setCursor(1, 2);
+  pos++;
+  lcd.print("Water: "+String(pos));
+  delay(1000);
+  lcd.noBacklight();
+ 
+  */
+
+/*
+  delay(1000);
+  lcd->setState("Normal");
+  delay(1000);
+  pos++;
+  lcd->setWaterLevel(pos);
+  delay(1000);
+  lcd->clear();
+  //Serial.println(lcd->isOn());
+  lcd->setON(false);
+  */
+
+  while(digitalRead(7)==HIGH){
+    motor->on();
     Serial.println(pos);
     motor->setPosition(pos);         
-    // delay(2);            
-    pos += delta;
+    //delay(2);            
+    pos = map(analogRead(A2), 0, 1023, 0, 179);
+    lcd->setState(String(pos));
   }
   motor->off();
-  pos -= delta;
-  delta = -delta;
+
+
+  //delay(1000);
+
+  
+  
+  
+  /*
+  motor->on();
+  
+  Serial.println(String(pos));
+  motor->setPosition(10);    
+  motor->off();
   delay(1000);
+  */
+
 
 
   /*

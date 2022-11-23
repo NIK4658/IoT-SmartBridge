@@ -12,16 +12,20 @@ Sonar::Sonar(int trigPin, int echoPin){
 
 float Sonar::MeasureDistance(){
   /* invio impulso */
+  
   digitalWrite(trigPin,LOW);
   delayMicroseconds(3);
   digitalWrite(trigPin,HIGH);
   delayMicroseconds(5);
   digitalWrite(trigPin,LOW);
+  
    
   /* ricevi l’eco */
+  
   long tUS = pulseInLong(echoPin, HIGH);
   double t = tUS / 1000.0 / 1000.0 / 2;
   double d = t*vs;
+  
   this->lastDistance=d;
   return d;
 }

@@ -4,6 +4,14 @@
 #include "Task.h"
 #include "Led.h"
 #include "Sonar.h"
+#include "Arduino.h"
+
+enum class blinkState {
+  WAIT,
+  BLINK,
+  DISABLED,
+};
+
 
 class State: public Task {
  
@@ -37,6 +45,8 @@ private:
   int waterSamplingRate;
   int valveDegrees;
   int manualOperations;
+  uint32_t prevTime;
+  blinkState blink;
 };
 
 #endif

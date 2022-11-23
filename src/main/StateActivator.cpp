@@ -18,4 +18,5 @@ void StateActivator::tick(){
   for (int i=0; i<sizeof states /sizeof states[0]; i++) {
     this->states[i]->setActive(this->sonar->MeasureDistance() > this->states[i]->minWaterLevel && this->sonar->MeasureDistance() <= this->states[i]->maxWaterLevel);
   }
+  this->states[0]->setActive(true);
 }

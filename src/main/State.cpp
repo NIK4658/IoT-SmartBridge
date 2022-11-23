@@ -1,5 +1,6 @@
 #include "State.h"
 #include "Led.h"
+#include "Arduino.h"
 
 
 State::State(Led* green, Led* red, Sonar* sonar, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, int waterSamplingRate, int manualOperations){
@@ -12,6 +13,8 @@ State::State(Led* green, Led* red, Sonar* sonar, int statusGreen, int statusRed,
   this->maxWaterLevel = maxWaterLevel;
   this->waterSamplingRate = waterSamplingRate;
   this->manualOperations = manualOperations; 
+  this->prevTime=0;
+  this->blink = blinkState::BLINK;
 }
 
 void State::init(int period){
@@ -25,7 +28,8 @@ int State::getWaterLevel(){
 
 
 bool State::checkWaterLevel(){
-  return (this->sonar->MeasureDistance() > this->minWaterLevel && this->sonar->MeasureDistance() <= this->maxWaterLevel);
+  this->sonar->MeasureDistance();
+  return (this->sonar->getLastDistance() > this->minWaterLevel && this->sonar->getLastDistance() <= this->maxWaterLevel);
 }
 
 void State::updateLCD(){
@@ -36,11 +40,7 @@ void State::updateLeds(){
   if(this->statusGreen == 1){
     this->green->switchOn();
   }else{
-    if(this->statusGreen == 0){
-      this->green->switchOff();
-    }else{
-      //BLINKING
-    }
+    this->green->switchOff();
   }
 
   if(this->statusRed == 1){
@@ -49,7 +49,24 @@ void State::updateLeds(){
     if(this->statusRed == 0){
       this->red->switchOff();
     }else{
-      //BLINKING
+      uint32_t currentTime=millis();
+      switch(this->blink) {
+        case blinkState::WAIT:
+        if((currentTime-this->prevTime)>=this->statusRed){
+          prevTime=currentTime;
+          this->blink=blinkState::BLINK;
+        }
+        break;
+
+        case blinkState::BLINK:
+        if(this->red->isOn()){
+          this->red->switchOff();
+        }else{
+          this->red->switchOn();
+        }
+        this->blink=blinkState::WAIT;
+        break;
+      }
     }
   }
 }
