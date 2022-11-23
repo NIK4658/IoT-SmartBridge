@@ -10,7 +10,11 @@ void ServoMotor::on(){
 }
 
 void ServoMotor::setPosition(int angle){
-  motor.write(angle);              
+  //this->on();
+  //for(int i=0; i<10; i++){
+  motor.write(angle);
+  //}
+  //this->off();   
 }
 
 void ServoMotor::off(){

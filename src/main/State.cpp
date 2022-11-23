@@ -3,16 +3,20 @@
 #include "Arduino.h"
 
 
-State::State(Led* green, Led* red, Sonar* sonar, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, int waterSamplingRate, int manualOperations){
+State::State(String name, Led* green, Led* red, Sonar* sonar, ServoMotor* motor, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, int waterSamplingRate, int manualOperations, int minValve, int maxValve){
+  this->name = name;
   this->green = green;
   this->red = red;
   this->sonar = sonar;
+  this->motor = motor;
   this->statusGreen = statusGreen;
   this->statusRed = statusRed;
   this->minWaterLevel = minWaterLevel;
   this->maxWaterLevel = maxWaterLevel;
   this->waterSamplingRate = waterSamplingRate;
   this->manualOperations = manualOperations; 
+  this->minValve=minValve;
+  this->maxValve=maxValve;
   this->prevTime=0;
   this->blink = blinkState::BLINK;
 }
@@ -33,7 +37,17 @@ bool State::checkWaterLevel(){
 }
 
 void State::updateLCD(){
-  return true;
+  
+}
+
+void State::updateValve(){
+  int value=map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
+  Serial.println(String(this->sonar->getLastDistance()*100));
+  Serial.println(value);
+  motor->on();
+  motor->setPosition(value);
+  //delay(30);            
+  //motor->off();
 }
 
 void State::updateLeds(){
@@ -75,6 +89,9 @@ void State::tick(){
   if(this->checkWaterLevel()){
     this->updateLeds();
     this->updateLCD();
+    if(this->minValve!=this->maxValve){
+      //this->updateValve();      
+    }
   }else{
     Task::setActive(false);
   }

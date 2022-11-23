@@ -12,116 +12,89 @@
 #include "LCD.h"
 #include "LightTask.h"
 
-#include <LiquidCrystal_I2C.h> 
-
 //Definizioni PINS
 
-#define ledA 7 	//Green for lightning
-#define ledB 5 	//Green for bridge status
-#define ledC 6 	//Red for alarm state
+#define ledA 2 	//Green for lightning
+#define ledB 3 	//Green for bridge status
+#define ledC 4 	//Red for alarm state
 
-#define LS A1 	//Light Sensor
-#define PIR 1 	//PIR
-#define POT A0 	//Valve controller
-#define BTN 8 	//Manual mode
-#define Sonarr 4 //Sonar ping
-#define Motor 9 //Servo Motor (Valve)
+#define LS A0 	//Light Sensor
+#define PIR 5 	//PIR
+#define POT A2 	//Valve controller
+#define BTN 7 	//Manual mode
+#define SonarTrig 13 //Sonar trig
+#define SonarEcho 12 //Sonar echo
+#define Motor A1 //Servo Motor (Valve)
 
 //Definizioni Costanti
 
-#define TH_L 100 //Light Treshold (DA DEFINIRE)
+#define TH_L 700 //Light Treshold (DA DEFINIRE)
 
-#define WL_1 100	//Water level normal (DA DEFINIRE)
-#define WL_2 200	//Water level pre alarm (DA DEFINIRE)
-#define WL_MAX 300	//Water level alarm (DA DEFINIRE)
+#define WL_1 0.5	//Water level normal (DA DEFINIRE)
+#define WL_2 0.4	//Water level pre alarm (DA DEFINIRE)
+#define WL_MAX 0.01	//Water level alarm (DA DEFINIRE)
 
-#define PE_Normal 500 	//Sampling Rate Water level Normal (DA DEFINIRE)
-#define PE_PreAlarm 350	//Sampling Rate Water level PreAlarm (DA DEFINIRE)
-#define PE_Alarm 200	//Sampling Rate Water level Alarm (DA DEFINIRE)
+#define PE_Normal 1000 	//Sampling Rate Water level Normal (DA DEFINIRE)
+#define PE_PreAlarm 500	//Sampling Rate Water level PreAlarm (DA DEFINIRE)
+#define PE_Alarm 300	//Sampling Rate Water level Alarm (DA DEFINIRE)
 
 
 //Definizione Variabili
-
 Scheduler sched;
-Sonar* sonar;
-Task* normalState;
-Task* preAlarmState;
-Task* alarmState;
-Pir* pir;
-LightSensor* ls;
-Led* green;
-Led* red;
-Led* people;
-ServoMotor* motor;
-int pos;
-int delta;
 
 LCD* lcd;
-
-Task* newTask;
-
-int manualenabled=0;
-
-//LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27,20,4);
+ServoMotor* motor;
 
 void setup()
 {
+  //Componenti
+  Sonar* sonar = new Sonar(SonarTrig, SonarEcho);
+  LightSensor* ls = new LightSensor(LS);
+  Pir* pir = new Pir(PIR);
+  //Pot potentiometer = new Pot(POT);
+  //button btn = new Button(8);
+  motor = new ServoMotor(Motor);
+  Led* pedestrianLed = new Led(ledA);
+  Led* bridgeGreen = new Led(ledB);
+  Led* bridgeRed = new Led(ledC);
+  lcd = new LCD();
+  lcd->init();
+
+  
+  //Setup
   Serial.begin(9600);
+
+  //Tasks
   sched.init(250);
 
-  //Task* lights = new LightTask(pin);
-  //lights->init(500);
+  Task* lights = new LightTask(pir, pedestrianLed, ls, TH_L);
+  lights->init(500);
 
-  green = new Led(3);
-  red = new Led(4);
-  people = new Led(2);
-
-  sonar = new Sonar(13,12);
-
-  newTask = new LightTask(); 
-  newTask->init(500);
-
-  normalState = new State(green, red, sonar, 1, 2000, 0, 40, 10, 1);
+  Task* normalState = new State(String("Normal"), bridgeGreen, bridgeRed, sonar, motor, 1, 0, WL_1, 30, 10, 1, 0, 0);
   normalState->init(PE_Normal);
 
-  preAlarmState = new State(green, red, sonar, 0, 1, 100, 150, 10, 1);
+  Task* preAlarmState = new State(String("PreAlarm"), bridgeGreen, bridgeRed, sonar, motor, 1, 2000, WL_2, WL_1, 10, 1, 0, 0);
   preAlarmState->init(PE_PreAlarm);
 
-  alarmState = new State(green, red, sonar, 1, 1, 151, 300, 10, 1);
+  Task* alarmState = new State(String("Alarm"), bridgeGreen, bridgeRed, sonar, motor, 0, 1, WL_MAX, WL_2, 10, 1, 1, 180);
   alarmState->init(PE_Alarm);
 
+  Task* StateAct = new StateActivator(normalState, preAlarmState, alarmState, lights, sonar, true, true, false);
+  StateAct->init(250);
 
-
-  Task* StateActivatorr = new StateActivator(normalState, preAlarmState, alarmState, sonar);
-  StateActivatorr->init(100);
-
-  //sched.addTask(lights);
-  sched.addTask(StateActivatorr);
+  sched.addTask(StateAct);
+  sched.addTask(lights);
   sched.addTask(normalState);
-  //sched.addTask(newTask);
-  //sched.addTask(preAlarmState);
-  //sched.addTask(alarmState);
-
-  //ls = new LightSensor(A0);
-  //pir = new Pir(8);
-
-  motor = new ServoMotor(A1);
-
-  pos = 0;
-  delta = 1;
-  
-  lcd = new LCD();
-  //lcd->init();
-
-  lcd->init();
-  //lcd.backlight();
+  sched.addTask(preAlarmState);
+  sched.addTask(alarmState);
 }
 
 void loop()
 {
-  
-  //sched.schedule();
-  Serial.println(digitalRead(7));
+  sched.schedule();
+  //motor->setPosition()
+  //lcd->setState("Normal");
+  //Serial.println(digitalRead(7));
 
   /*
   if(digitalRead(7)==HIGH){
@@ -161,16 +134,24 @@ void loop()
   lcd->setON(false);
   */
 
-  while(digitalRead(7)==HIGH){
-    motor->on();
-    Serial.println(pos);
-    motor->setPosition(pos);         
-    //delay(2);            
-    pos = map(analogRead(A2), 0, 1023, 0, 179);
-    lcd->setState(String(pos));
-  }
-  motor->off();
 
+/*
+  if(digitalRead(7)==HIGH){
+    motor->off();
+  }
+  //int pos=analogRead(POT);
+  //while(digitalRead(7)==HIGH){
+    motor->on();
+    int pos = map(analogRead(A2), 0, 1023, 0, 179);
+    Serial.println(pos);
+    motor->setPosition(pos);     
+    
+    delay(30);            
+    motor->off();
+    lcd->setState(String(pos));
+    */
+  //}
+  //motor->off();
 
   //delay(1000);
 

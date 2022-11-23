@@ -14,6 +14,7 @@ LCD::LCD(){
 
 void LCD::init(){
   lcd.init();
+  lcd.backlight();
 }
 
 void LCD::setWaterLevel(int value){
