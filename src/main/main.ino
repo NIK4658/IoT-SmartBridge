@@ -30,7 +30,7 @@
 
 #define TH_L 700 //Light Treshold (DA DEFINIRE)
 
-#define WL_1 0.5	//Water level normal (DA DEFINIRE)
+#define WL_1 0.6	//Water level normal (DA DEFINIRE)
 #define WL_2 0.4	//Water level pre alarm (DA DEFINIRE)
 #define WL_MAX 0.01	//Water level alarm (DA DEFINIRE)
 
@@ -70,13 +70,13 @@ void setup()
   Task* lights = new LightTask(pir, pedestrianLed, ls, TH_L);
   lights->init(500);
 
-  Task* normalState = new State(String("Normal"), bridgeGreen, bridgeRed, sonar, motor, 1, 0, WL_1, 30, 10, 1, 0, 0);
+  Task* normalState = new State(String("Normal"), bridgeGreen, bridgeRed, sonar, motor, lcd, false, false, 1, 0, WL_1, 30, 10, 1, 0, 0);
   normalState->init(PE_Normal);
 
-  Task* preAlarmState = new State(String("PreAlarm"), bridgeGreen, bridgeRed, sonar, motor, 1, 2000, WL_2, WL_1, 10, 1, 0, 0);
+  Task* preAlarmState = new State(String("PreAlarm"), bridgeGreen, bridgeRed, sonar, motor, lcd, true, false, 1, 2000, WL_2, WL_1, 10, 1, 0, 0);
   preAlarmState->init(PE_PreAlarm);
 
-  Task* alarmState = new State(String("Alarm"), bridgeGreen, bridgeRed, sonar, motor, 0, 1, WL_MAX, WL_2, 10, 1, 1, 180);
+  Task* alarmState = new State(String("Alarm"), bridgeGreen, bridgeRed, sonar, motor, lcd, true, true, 0, 1, WL_MAX, WL_2, 10, 1, 1, 180);
   alarmState->init(PE_Alarm);
 
   Task* StateAct = new StateActivator(normalState, preAlarmState, alarmState, lights, sonar, true, true, false);
@@ -89,7 +89,7 @@ void setup()
   sched.addTask(alarmState);
 }
 
-void loop()
+void loop() 
 {
   sched.schedule();
   //motor->setPosition()

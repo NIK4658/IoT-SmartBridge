@@ -8,7 +8,8 @@ public:
   LCD();
   void init();
 
-  void setWaterLevel(int value);
+  void setWaterLevel(float value);
+  void setValve(int value);
   void setState(String value);
   void setON(bool flag);
   bool isOn();

@@ -6,6 +6,7 @@
 #include "Sonar.h"
 #include "Arduino.h"
 #include "ServoMotor.h"
+#include "LCD.h"
 
 enum class blinkState {
   WAIT,
@@ -18,7 +19,7 @@ class State: public Task {
  
 public:
 
-  State(String name, Led* green, Led* red, Sonar* sonar, ServoMotor* motor, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, int waterSamplingRate, int manualOperations, int minValve, int maxValve);
+  State(String name, Led* green, Led* red, Sonar* sonar, ServoMotor* motor, LCD* lcd, bool showLCD, bool showValve, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, int waterSamplingRate, int manualOperations, int minValve, int maxValve);
 
   void init(int period);
 
@@ -44,7 +45,10 @@ private:
   ServoMotor* motor;
   Led* green;
   Led* red;
+  LCD* lcd;
   Sonar* sonar;
+  bool showLCD;
+  bool showValve;
   int statusGreen;
   int statusRed;
   int waterSamplingRate;
