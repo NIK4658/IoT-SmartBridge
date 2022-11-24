@@ -2,6 +2,7 @@
 #include "Sonar.h"
 
 
+
 StateActivator::StateActivator(State* normalState, State* preAlarmState, State* alarmState, LightTask* lights, Sonar* sonar, bool lightsEnabled1, bool lightsEnabled2, bool lightsEnabled3){
   this->sonar = sonar;
   this->states[0]=normalState;
@@ -29,6 +30,8 @@ void StateActivator::tick(){
   if(!this->lights->isActive()){
     this->lights->turnLedOff();
   }
+
+  //MsgService.sendMsg("prova");
 
 /*
   Serial.print("Normal:");

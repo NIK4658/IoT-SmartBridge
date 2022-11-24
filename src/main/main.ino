@@ -14,6 +14,7 @@
 #include "ServoTimer2.h"
 #include "Potentiometer.h"
 #include "Button.h"
+#include "MsgService.h"
 
 //Definizioni PINS
 
@@ -54,6 +55,7 @@ void setup()
 {
   //Setup
   Serial.begin(9600);
+  MsgService.init();
 
   //Componenti
   Sonar* sonar = new Sonar(SonarTrig, SonarEcho);
@@ -92,7 +94,6 @@ void setup()
   sched.addTask(normalState);
   sched.addTask(preAlarmState);
   sched.addTask(alarmState);
-
 }
 
 void loop() 

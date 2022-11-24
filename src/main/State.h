@@ -22,6 +22,12 @@ enum class LCDState {
   ENABLED_WITHVALVE,
 };
 
+enum class ManualMode {
+  DISABLED,
+  ENABLED,
+  VIRTUAL,
+};
+
 class State: public Task {
  
 public:
@@ -60,7 +66,7 @@ private:
   bool manualOperations;
   uint32_t prevTime;
   Button* btn;
-  bool manualMode;
+  ManualMode manualMode;
   blinkState blink;
   int minValve;
   int maxValve;

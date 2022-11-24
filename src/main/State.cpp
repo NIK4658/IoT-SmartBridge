@@ -1,6 +1,7 @@
 #include "State.h"
 #include "Led.h"
 #include "Arduino.h"
+#include "MsgService.h"
 
 
 State::State(String name, Led* green, Led* red, Sonar* sonar, ServoTimer2* motor, LCD* lcd, Potentiometer* pot, Button* btn, LCDState lcdState, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, bool manualOperations, int minValve, int maxValve){
@@ -18,7 +19,7 @@ State::State(String name, Led* green, Led* red, Sonar* sonar, ServoTimer2* motor
   this->minWaterLevel = minWaterLevel;
   this->maxWaterLevel = maxWaterLevel;
   this->manualOperations = manualOperations; 
-  this->manualMode=false;
+  this->manualMode=ManualMode::DISABLED;
   this->minValve=minValve;
   this->maxValve=maxValve;
   this->prevTime=0;
@@ -51,20 +52,54 @@ void State::updateLCD(){
 
 void State::updateValve(){
   float coeff = (2250.0-750.0)/180;
-  if(this->minValve!=this->maxValve){
-    this->valveDegrees = map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
-  }else{
-    this->valveDegrees = this->minValve;
+  if(this->manualMode!=ManualMode::VIRTUAL){
+    if(this->minValve!=this->maxValve){
+      this->valveDegrees = map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
+    }else{
+      this->valveDegrees = this->minValve;
+    }
   }
 
   if(this->manualOperations && btn->checkChangeState()){
-    this->manualMode = !(this->manualMode);
+    switch(this->manualMode){
+      case ManualMode::DISABLED:
+      this->manualMode=ManualMode::ENABLED;
+      break;
+      case ManualMode::ENABLED:
+      this->manualMode=ManualMode::DISABLED;
+      break;
+      case ManualMode::VIRTUAL:
+      break;
+    }
   }
 
-  if(this->manualOperations && this->manualMode){
+  if(this->manualOperations && this->manualMode==ManualMode::ENABLED){
     this->valveDegrees = map(pot->getAnalogValue(), 0, 1023, this->maxValve, this->minValve) ;
   }
 
+
+  if(this->manualOperations && MsgService.isMsgAvailable() && this->manualMode!=ManualMode::VIRTUAL){
+    Msg* msg = MsgService.receiveMsg(); 
+    if(msg->getContent() == "ENABLE VIRTUAL MODE"){
+      this->manualMode = ManualMode::VIRTUAL;
+    }
+
+    if(msg->getContent() == "DISABLE VIRTUAL MODE"){
+      this->manualMode = ManualMode::VIRTUAL;
+    }
+    delete msg;
+  }
+
+  if(this->manualOperations && MsgService.isMsgAvailable() && this->manualMode==ManualMode::VIRTUAL){
+    Msg* msg = MsgService.receiveMsg(); 
+    this->valveDegrees = msg->getContent().toInt();
+    delete msg;
+  }
+
+  if(MsgService.isMsgAvailable()){
+      Msg* msg = MsgService.receiveMsg();
+      delete msg;
+  }
   motor->write(750 + this->valveDegrees*coeff);   
 }
 
@@ -95,5 +130,7 @@ void State::tick(){
     this->updateLeds();
     this->updateValve();  
     this->updateLCD();
+    MsgService.sendMsg("State:" + String(this->name));
+    MsgService.sendMsg("WaterLevel:" + String(this->sonar->getLastDistance()));
   }
 }

@@ -16,6 +16,7 @@ public:
   void tick();
 private:
   int lightTreshold;
+  bool lastValue;
   Led* led;
   LightSensor* ls;
   Pir* pir;
