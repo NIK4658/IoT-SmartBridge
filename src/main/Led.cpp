@@ -17,6 +17,14 @@ void Led::switchOff(){
   this->ON = false;
 };
 
+void Led::setState(bool value){
+  if(value){
+    this->switchOn();
+  }else{
+    this->switchOff();
+  }
+}
+
 bool Led::isOn(){
   return this->ON;
 };

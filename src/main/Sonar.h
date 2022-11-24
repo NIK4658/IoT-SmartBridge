@@ -14,6 +14,4 @@ private:
   double vs;
 };
 
-
-
 #endif

@@ -8,7 +8,8 @@ class Led: public Light {
 public:
   Led(int pin);
   void switchOn();
-  void switchOff();    
+  void switchOff();   
+  void setState(bool value);
   bool isOn();
 private:
   int pin;  

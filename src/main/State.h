@@ -7,6 +7,8 @@
 #include "Arduino.h"
 #include "ServoTimer2.h"
 #include "LCD.h"
+#include "Potentiometer.h"
+#include "Button.h"
 
 enum class blinkState {
   WAIT,
@@ -14,12 +16,17 @@ enum class blinkState {
   DISABLED,
 };
 
+enum class LCDState {
+  DISABLED,
+  ENABLED,
+  ENABLED_WITHVALVE,
+};
 
 class State: public Task {
  
 public:
 
-  State(String name, Led* green, Led* red, Sonar* sonar, ServoTimer2* motor, LCD* lcd, bool showLCD, bool showValve, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, int waterSamplingRate, int manualOperations, int minValve, int maxValve);
+  State(String name, Led* green, Led* red, Sonar* sonar, ServoTimer2* motor, LCD* lcd, Potentiometer* pot, Button* btn, LCDState lcdState, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, bool manualOperations, int minValve, int maxValve);
 
   void init(int period);
 
@@ -29,8 +36,6 @@ public:
   double maxWaterLevel;
 
 protected:
-
-  int getWaterLevel();
 
   bool checkWaterLevel();
 
@@ -47,14 +52,15 @@ private:
   Led* red;
   LCD* lcd;
   Sonar* sonar;
-  bool showLCD;
-  bool showValve;
+  Potentiometer* pot;
+  LCDState lcdState;
   int statusGreen;
   int statusRed;
-  int waterSamplingRate;
   int valveDegrees;
-  int manualOperations;
+  bool manualOperations;
   uint32_t prevTime;
+  Button* btn;
+  bool manualMode;
   blinkState blink;
   int minValve;
   int maxValve;

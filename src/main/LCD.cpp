@@ -40,6 +40,7 @@ void LCD::setON(bool flag){
     lcd.backlight();
   }else{
     lcd.noBacklight();
+    this->clear();
   }
   //this->lcd->setBacklight(flag);
 }

@@ -12,6 +12,8 @@
 #include "LCD.h"
 #include "LightTask.h"
 #include "ServoTimer2.h"
+#include "Potentiometer.h"
+#include "Button.h"
 
 //Definizioni PINS
 
@@ -19,73 +21,71 @@
 #define ledB 3 	//Green for bridge status
 #define ledC 4 	//Red for alarm state
 
-#define LS A0 	//Light Sensor
-#define PIR 5 	//PIR
-#define POT A2 	//Valve controller
-#define BTN 7 	//Manual mode
-#define SonarTrig 13 //Sonar trig
-#define SonarEcho 12 //Sonar echo
-#define Motor 9 //Servo Motor (Valve)
+#define LS A0 	      //Light Sensor
+#define PIR 5 	      //PIR
+#define POT A2 	      //Valve controller
+#define BTN 7 	      //Manual mode
+#define SonarTrig 13  //Sonar trig
+#define SonarEcho 12  //Sonar echo
+#define Motor 9       //Servo Motor (Valve)
 
 //Definizioni Costanti
 
-#define TH_L 700 //Light Treshold (DA DEFINIRE)
+#define TH_L 700      //Light Treshold (DA DEFINIRE)
 
-#define WL_1 0.6	//Water level normal (DA DEFINIRE)
-#define WL_2 0.4	//Water level pre alarm (DA DEFINIRE)
-#define WL_MAX 0.01	//Water level alarm (DA DEFINIRE)
-#define WL_MIN 30	//Water level alarm (DA DEFINIRE)
+#define WL_1 0.6	    //Water level normal (DA DEFINIRE)
+#define WL_2 0.4	    //Water level pre alarm (DA DEFINIRE)
+#define WL_MAX 0.01	  //Water level alarm (DA DEFINIRE)
+#define WL_MIN 30	    //Water level alarm (DA DEFINIRE)
 
-#define PE_Normal 2000 	//Sampling Rate Water level Normal (DA DEFINIRE)
-#define PE_PreAlarm 1000	//Sampling Rate Water level PreAlarm (DA DEFINIRE)
-#define PE_Alarm 750	//Sampling Rate Water level Alarm (DA DEFINIRE)
+#define PE_Normal 2000 	      //Sampling Rate Water level Normal 
+#define PE_PreAlarm 1000	    //Sampling Rate Water level PreAlarm 
+#define PE_Alarm 750	        //Sampling Rate Water level Alarm
+#define PE_Lights 500	        //Rate Smart Lights (DA DEFINIRE)
+#define PE_StateActivator 250	//Rate StateActivator
+
+#define PE_Scheduler 250      //Rate Scheduler
 
 
 //Definizione Variabili
 Scheduler sched;
 
-LCD* lcd;
-ServoTimer2* motor;
-
 void setup()
 {
+  //Setup
+  Serial.begin(9600);
+
   //Componenti
   Sonar* sonar = new Sonar(SonarTrig, SonarEcho);
   LightSensor* ls = new LightSensor(LS);
   Pir* pir = new Pir(PIR);
-  //Pot potentiometer = new Pot(POT);
-  //button btn = new Button(8);
-  //motor = new ServoMotor(Motor);
+  Potentiometer* pot = new Potentiometer(POT);
+  Button* btn = new Button(BTN);
+  ServoTimer2* motor = new ServoTimer2();
+  motor->attach(Motor);
   Led* pedestrianLed = new Led(ledA);
   Led* bridgeGreen = new Led(ledB);
   Led* bridgeRed = new Led(ledC);
-  lcd = new LCD();
+  LCD* lcd = new LCD();
   lcd->init();
 
-  motor = new ServoTimer2();
-  motor->attach(Motor);
-
-  
-  //Setup
-  Serial.begin(9600);
-
   //Tasks
-  sched.init(250);
+  sched.init(PE_Scheduler);
 
   Task* lights = new LightTask(pir, pedestrianLed, ls, TH_L);
-  lights->init(500);
+  lights->init(PE_Lights);
 
-  Task* normalState = new State(String("Normal"), bridgeGreen, bridgeRed, sonar, motor, lcd, false, false, 1, 0, WL_1, WL_MIN, 10, 1, 0, 0);
+  Task* normalState = new State(String("Normal"), bridgeGreen, bridgeRed, sonar, motor, lcd, pot, btn, LCDState::DISABLED, 1, 0, WL_1, WL_MIN, false, 0, 0);
   normalState->init(PE_Normal);
 
-  Task* preAlarmState = new State(String("PreAlarm"), bridgeGreen, bridgeRed, sonar, motor, lcd, true, false, 1, 2000, WL_2, WL_1, 10, 1, 0, 0);
+  Task* preAlarmState = new State(String("PreAlarm"), bridgeGreen, bridgeRed, sonar, motor, lcd, pot, btn, LCDState::ENABLED, 1, 2000, WL_2, WL_1, false, 0, 0);
   preAlarmState->init(PE_PreAlarm);
 
-  Task* alarmState = new State(String("Alarm"), bridgeGreen, bridgeRed, sonar, motor, lcd, true, true, 0, 1, WL_MAX, WL_2, 10, 1, 1, 180);
+  Task* alarmState = new State(String("Alarm"), bridgeGreen, bridgeRed, sonar, motor, lcd, pot, btn, LCDState::ENABLED_WITHVALVE, 0, 1, WL_MAX, WL_2, true, 1, 180);
   alarmState->init(PE_Alarm);
 
   Task* StateAct = new StateActivator(normalState, preAlarmState, alarmState, lights, sonar, true, true, false);
-  StateAct->init(250);
+  StateAct->init(PE_StateActivator);
 
   sched.addTask(StateAct);
   sched.addTask(lights);
@@ -98,123 +98,4 @@ void setup()
 void loop() 
 {
   sched.schedule();
-
-  //motor->write(i);
-  //motor->setPosition()
-  //lcd->setState("Normal");
-  //Serial.println(digitalRead(7));
-
-  /*
-  if(digitalRead(7)==HIGH){
-    manualenabled=1;
-  }else{
-    manualenabled=0;
-  }
-  */
-
-  //Serial.println(digitalRead(5));
-  //lcd->setState("Normal");
-
-  //people->switchOn();
-
-  /*
-  delay(1000);
-  lcd.setCursor(1, 1);
-  lcd.print("Status: Normal");
-  delay(1000);
-  lcd.setCursor(1, 2);
-  pos++;
-  lcd.print("Water: "+String(pos));
-  delay(1000);
-  lcd.noBacklight();
- 
-  */
-
-/*
-  delay(1000);
-  lcd->setState("Normal");
-  delay(1000);
-  pos++;
-  lcd->setWaterLevel(pos);
-  delay(1000);
-  lcd->clear();
-  //Serial.println(lcd->isOn());
-  lcd->setON(false);
-  */
-
-/*
-
-  if(digitalRead(7)==HIGH){
-    motor->off();
-  }
-  */
-  //int pos=analogRead(POT);
-  //while(digitalRead(7)==HIGH){
-    
-    /*
-    int pos = map(analogRead(A2), 0, 1023, 0, 179);
-    Serial.println(pos);
-    if(digitalRead(7)==HIGH){
-      motor->write(pos);  
-    }
-
-    for (int i = 0; i < 180; i++) {
-    
-    }
-
-    motor->write(750);
-    delay(1000);
-    motor->write(1000);
-    delay(1000);
-    motor->write(1200);
-    delay(1000);
-*/
-
-    //
-    //delay(100);   
-    
-    //delay(30);            
-    //motor->off();
-    //lcd->setState(String(pos));
-  
-  //}
-  //motor->off();
-
-
-  //delay(1000);
-
-  
-  
-  
-  /*
-  motor->on();
-  
-  Serial.println(String(pos));
-  motor->setPosition(10);    
-  motor->off();
-  delay(1000);
-  */
-
-
-
-  /*
-  if(ls->getLuminosity()<300 && pir->checkDifference()==1){
-    green->switchOn();
-    red->switchOn();
-  }else{
-    green->switchOff();
-    red->switchOff();
-  }
-  Serial.println(ls->getLuminosity());
-  */
-
-  /*
-  Serial.println(sonar->getLastDistance());
-  Serial.print("NormalState:");
-  Serial.println(normalState->isActive());
-  Serial.print("preAlarmState:");
-  Serial.println(preAlarmState->isActive());
-  Serial.print("AlarmState:");
-  Serial.println(alarmState->isActive());
-  */
 }

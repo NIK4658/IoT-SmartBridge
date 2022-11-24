@@ -20,9 +20,5 @@ void LightTask::turnLedOff(){
 }
   
 void LightTask::tick(){
-  if((ls->getLuminosity()<this->lightTreshold) && this->pir->checkDifference()){
-    led->switchOn();
-  }else{
-    led->switchOff();
-  }
+  led->setState((ls->getLuminosity()<this->lightTreshold) && this->pir->checkDifference());
 }

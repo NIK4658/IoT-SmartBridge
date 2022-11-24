@@ -20,13 +20,13 @@ void StateActivator::init(int period){
 
 void StateActivator::tick(){
   this->lights->setActive(false);
-  for (int i=0; i<sizeof states / sizeof states[0]; i++) {
-    this->states[i]->setActive(this->sonar->MeasureDistance() > this->states[i]->minWaterLevel && this->sonar->MeasureDistance() <= this->states[i]->maxWaterLevel);
+  for (int i=0; i < sizeof states / sizeof states[0]; i++) {
+    this->states[i]->setActive(this->sonar->getLastDistance() > this->states[i]->minWaterLevel && this->sonar->getLastDistance() <= this->states[i]->maxWaterLevel);
     if(this->states[i]->isActive() && this->lightsEnabled[i]==true){
       this->lights->setActive(true);
     }
   }
-  if(this->lights->isActive()==false){
+  if(!this->lights->isActive()){
     this->lights->turnLedOff();
   }
 

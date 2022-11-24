@@ -3,36 +3,32 @@
 #include "Arduino.h"
 
 
-State::State(String name, Led* green, Led* red, Sonar* sonar, ServoTimer2* motor, LCD* lcd, bool showLCD, bool showValve, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, int waterSamplingRate, int manualOperations, int minValve, int maxValve){
+State::State(String name, Led* green, Led* red, Sonar* sonar, ServoTimer2* motor, LCD* lcd, Potentiometer* pot, Button* btn, LCDState lcdState, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, bool manualOperations, int minValve, int maxValve){
   this->name = name;
   this->green = green;
   this->red = red;
   this->lcd = lcd;
   this->sonar = sonar;
   this->motor = motor;
-  this->showLCD = showLCD;
-  this->showValve = showValve;
+  this->lcdState = lcdState;
   this->statusGreen = statusGreen;
   this->statusRed = statusRed;
+  this->btn=btn;
+  this->pot=pot;
   this->minWaterLevel = minWaterLevel;
   this->maxWaterLevel = maxWaterLevel;
-  this->waterSamplingRate = waterSamplingRate;
   this->manualOperations = manualOperations; 
+  this->manualMode=false;
   this->minValve=minValve;
   this->maxValve=maxValve;
   this->prevTime=0;
+  this->valveDegrees = 0;
   this->blink = blinkState::BLINK;
 }
 
 void State::init(int period){
   Task::init(period);
-  valveDegrees = 0;
 }
-
-int State::getWaterLevel(){
-  return 0;
-}
-
 
 bool State::checkWaterLevel(){
   this->sonar->MeasureDistance();
@@ -40,41 +36,43 @@ bool State::checkWaterLevel(){
 }
 
 void State::updateLCD(){
-  this->lcd->setON(this->showLCD);
-  if(this->showLCD){
+  if(this->lcdState==LCDState::ENABLED || this->lcdState==LCDState::ENABLED_WITHVALVE){
+    this->lcd->setON(true);
     this->lcd->clear();
     this->lcd->setWaterLevel(this->sonar->getLastDistance());
     this->lcd->setState(this->name);
-    if(this->showValve){
-      //this->lcd->setValve(motor->getAngle());
+    if(this->lcdState==LCDState::ENABLED_WITHVALVE){
+      this->lcd->setValve(this->valveDegrees);
     }
+  }else{
+    this->lcd->setON(false);
   }
 }
 
 void State::updateValve(){
-  int value=map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
-  value=map(analogRead(A2), 0, 1023, this->maxValve, this->minValve);
-  //Serial.println(String(this->sonar->getLastDistance()*100));
-  Serial.println(value);
   float coeff = (2250.0-750.0)/180;
-  Serial.println(motor->read());
-  motor->write(750 + value*coeff);  
+  if(this->minValve!=this->maxValve){
+    this->valveDegrees = map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
+  }else{
+    this->valveDegrees = this->minValve;
+  }
+
+  if(this->manualOperations && btn->checkChangeState()){
+    this->manualMode = !(this->manualMode);
+  }
+
+  if(this->manualOperations && this->manualMode){
+    this->valveDegrees = map(pot->getAnalogValue(), 0, 1023, this->maxValve, this->minValve) ;
+  }
+
+  motor->write(750 + this->valveDegrees*coeff);   
 }
 
 void State::updateLeds(){
-  if(this->statusGreen == 1){
-    this->green->switchOn();
-  }else{
-    this->green->switchOff();
-  }
+  this->green->setState(this->statusGreen == 1);
 
-  if(this->statusRed == 1){
-    this->red->switchOn();
-  }else{
-    if(this->statusRed == 0){
-      this->red->switchOff();
-    }else{
-      uint32_t currentTime=millis();
+  if(this->statusRed > 1){
+    uint32_t currentTime=millis();
       switch(this->blink) {
         case blinkState::WAIT:
         if((currentTime-this->prevTime)>=this->statusRed){
@@ -82,26 +80,20 @@ void State::updateLeds(){
           this->blink=blinkState::BLINK;
         }
         break;
-
         case blinkState::BLINK:
-        if(this->red->isOn()){
-          this->red->switchOff();
-        }else{
-          this->red->switchOn();
-        }
+        this->red->setState(!this->red->isOn());
         this->blink=blinkState::WAIT;
         break;
       }
-    }
+  }else{
+    this->red->setState(this->statusRed == 1);
   }
 }
 
 void State::tick(){
   if(this->checkWaterLevel()){
     this->updateLeds();
+    this->updateValve();  
     this->updateLCD();
-    if(this->minValve!=this->maxValve){
-      this->updateValve();      
-    }
   }
 }
