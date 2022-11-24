@@ -19,18 +19,18 @@ void LCD::init(){
 
 void LCD::setWaterLevel(float value){
   this->waterLevel=value;
-  lcd.setCursor(2, 2); // Set the cursor on the third column and first row.
+  lcd.setCursor(2, 1); // Set the cursor on the third column and first row.
   lcd.print("Water level:" + String(value));
 }
 
 void LCD::setState(String value){
   this->state=value;
-  lcd.setCursor(2, 1); // Set the cursor on the third column and first row.
+  lcd.setCursor(2, 0); // Set the cursor on the third column and first row.
   lcd.print("State: "+String(value));
 }
 
 void LCD::setValve(int value){
-  lcd.setCursor(2, 3); // Set the cursor on the third column and first row.
+  lcd.setCursor(2, 2); // Set the cursor on the third column and first row.
   lcd.print("Valve: "+String(value));
 }
 

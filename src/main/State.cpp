@@ -52,12 +52,10 @@ void State::updateLCD(){
 
 void State::updateValve(){
   float coeff = (2250.0-750.0)/180;
-  if(this->manualMode!=ManualMode::VIRTUAL){
-    if(this->minValve!=this->maxValve){
-      this->valveDegrees = map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
-    }else{
-      this->valveDegrees = this->minValve;
-    }
+  if(this->minValve!=this->maxValve){
+    this->valveDegrees = map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
+  }else{
+    this->valveDegrees = this->minValve;
   }
 
   if(this->manualOperations && btn->checkChangeState()){
@@ -68,38 +66,13 @@ void State::updateValve(){
       case ManualMode::ENABLED:
       this->manualMode=ManualMode::DISABLED;
       break;
-      case ManualMode::VIRTUAL:
-      break;
     }
   }
 
   if(this->manualOperations && this->manualMode==ManualMode::ENABLED){
     this->valveDegrees = map(pot->getAnalogValue(), 0, 1023, this->maxValve, this->minValve) ;
   }
-
-
-  if(this->manualOperations && MsgService.isMsgAvailable() && this->manualMode!=ManualMode::VIRTUAL){
-    Msg* msg = MsgService.receiveMsg(); 
-    if(msg->getContent() == "ENABLE VIRTUAL MODE"){
-      this->manualMode = ManualMode::VIRTUAL;
-    }
-
-    if(msg->getContent() == "DISABLE VIRTUAL MODE"){
-      this->manualMode = ManualMode::VIRTUAL;
-    }
-    delete msg;
-  }
-
-  if(this->manualOperations && MsgService.isMsgAvailable() && this->manualMode==ManualMode::VIRTUAL){
-    Msg* msg = MsgService.receiveMsg(); 
-    this->valveDegrees = msg->getContent().toInt();
-    delete msg;
-  }
-
-  if(MsgService.isMsgAvailable()){
-      Msg* msg = MsgService.receiveMsg();
-      delete msg;
-  }
+  
   motor->write(750 + this->valveDegrees*coeff);   
 }
 

@@ -19,6 +19,7 @@ float Sonar::MeasureDistance(){
   digitalWrite(trigPin,LOW);
   /* ricevi l’eco */
   long tUS = pulseInLong(echoPin, HIGH);
+  //long tUS = pulseIn(echoPin, HIGH, );
   double t = tUS / 1000.0 / 1000.0 / 2;
   double d = t*vs;
   this->lastDistance=d;
