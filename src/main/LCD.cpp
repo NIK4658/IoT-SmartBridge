@@ -2,10 +2,6 @@
 #include "Arduino.h"
 #include <LiquidCrystal_I2C.h> 
 
-/* Wiring: SDA => A4, SCL => A5 */
-/* I2C address of the LCD: 0x27 */
-/* Number of columns: 20 rows: 4 */
-
 LCD::LCD(){
   this->state="";
   this->waterLevel=0;
@@ -19,18 +15,18 @@ void LCD::init(){
 
 void LCD::setWaterLevel(float value){
   this->waterLevel=value;
-  lcd.setCursor(2, 1); // Set the cursor on the third column and first row.
-  lcd.print("Water level:" + String(value));
+  lcd.setCursor(2, 1); 
+  lcd.print("Water level:" + String(this->waterLevel));
 }
 
 void LCD::setState(String value){
   this->state=value;
-  lcd.setCursor(2, 0); // Set the cursor on the third column and first row.
-  lcd.print("State: "+String(value));
+  lcd.setCursor(2, 0); 
+  lcd.print("State: "+String(this->state));
 }
 
 void LCD::setValve(int value){
-  lcd.setCursor(2, 2); // Set the cursor on the third column and first row.
+  lcd.setCursor(2, 2);
   lcd.print("Valve: "+String(value));
 }
 
@@ -42,7 +38,6 @@ void LCD::setON(bool flag){
     lcd.noBacklight();
     this->clear();
   }
-  //this->lcd->setBacklight(flag);
 }
 
 void LCD::clear(){

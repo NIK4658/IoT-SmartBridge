@@ -4,20 +4,21 @@
 #include "MsgService.h"
 
 
-State::State(String name, Led* green, Led* red, Sonar* sonar, ServoTimer2* motor, LCD* lcd, Potentiometer* pot, Button* btn, LCDState lcdState, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, bool manualOperations, int minValve, int maxValve){
+State::State(String name, Led* led1, Led* led2, Sonar* sonar, ServoTimer2* motor, LCD* lcd, Potentiometer* pot, Button* btn, LCDState lcdState, int statusLed1, int statusLed2, double minWaterDistance, double maxWaterDistance, double WL_MIN, bool manualOperations, int minValve, int maxValve){
   this->name = name;
-  this->green = green;
-  this->red = red;
+  this->led1 = led1;
+  this->led2 = led2;
   this->lcd = lcd;
   this->sonar = sonar;
   this->motor = motor;
-  this->lcdState = lcdState;
-  this->statusGreen = statusGreen;
-  this->statusRed = statusRed;
   this->btn=btn;
   this->pot=pot;
-  this->minWaterLevel = minWaterLevel;
-  this->maxWaterLevel = maxWaterLevel;
+  this->lcdState = lcdState;
+  this->statusLed1 = statusLed1;
+  this->statusLed2 = statusLed2;
+  this->WL_MIN=WL_MIN;
+  this->minWaterDistance = minWaterDistance;
+  this->maxWaterDistance = maxWaterDistance;
   this->manualOperations = manualOperations; 
   this->manualMode=ManualMode::DISABLED;
   this->minValve=minValve;
@@ -33,14 +34,14 @@ void State::init(int period){
 
 bool State::checkWaterLevel(){
   this->sonar->MeasureDistance();
-  return (this->sonar->getLastDistance() > this->minWaterLevel && this->sonar->getLastDistance() <= this->maxWaterLevel);
+  return (this->sonar->getLastDistance() > this->minWaterDistance && this->sonar->getLastDistance() <= this->maxWaterDistance);
 }
 
 void State::updateLCD(){
   if(this->lcdState==LCDState::ENABLED || this->lcdState==LCDState::ENABLED_WITHVALVE){
     this->lcd->setON(true);
     this->lcd->clear();
-    this->lcd->setWaterLevel(this->sonar->getLastDistance());
+    this->lcd->setWaterLevel(this->WL_MIN-this->sonar->getLastDistance());
     this->lcd->setState(this->name);
     if(this->lcdState==LCDState::ENABLED_WITHVALVE){
       this->lcd->setValve(this->valveDegrees);
@@ -53,7 +54,7 @@ void State::updateLCD(){
 void State::updateValve(){
   float coeff = (2250.0-750.0)/180;
   if(this->minValve!=this->maxValve){
-    this->valveDegrees = map(this->sonar->getLastDistance()*100, this->minWaterLevel*100, this->maxWaterLevel*100, this->maxValve, this->minValve);
+    this->valveDegrees = map(this->sonar->getLastDistance()*100, this->minWaterDistance*100, this->maxWaterDistance*100, this->maxValve, this->minValve);
   }else{
     this->valveDegrees = this->minValve;
   }
@@ -77,24 +78,24 @@ void State::updateValve(){
 }
 
 void State::updateLeds(){
-  this->green->setState(this->statusGreen == 1);
+  this->led1->setState(this->statusLed1 == 1);
 
-  if(this->statusRed > 1){
+  if(this->statusLed2 > 1){
     uint32_t currentTime=millis();
       switch(this->blink) {
         case blinkState::WAIT:
-        if((currentTime-this->prevTime)>=this->statusRed){
+        if((currentTime-this->prevTime)>=this->statusLed2){
           prevTime=currentTime;
           this->blink=blinkState::BLINK;
         }
         break;
         case blinkState::BLINK:
-        this->red->setState(!this->red->isOn());
+        this->led2->setState(!this->led2->isOn());
         this->blink=blinkState::WAIT;
         break;
       }
   }else{
-    this->red->setState(this->statusRed == 1);
+    this->led2->setState(this->statusLed2 == 1);
   }
 }
 
@@ -104,6 +105,6 @@ void State::tick(){
     this->updateValve();  
     this->updateLCD();
     MsgService.sendMsg("State:" + String(this->name));
-    MsgService.sendMsg("WaterLevel:" + String(this->sonar->getLastDistance()));
+    MsgService.sendMsg("WaterLevel:" + String(this->WL_MIN-this->sonar->getLastDistance()));
   }
 }

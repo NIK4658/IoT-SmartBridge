@@ -32,14 +32,14 @@ class State: public Task {
  
 public:
 
-  State(String name, Led* green, Led* red, Sonar* sonar, ServoTimer2* motor, LCD* lcd, Potentiometer* pot, Button* btn, LCDState lcdState, int statusGreen, int statusRed, double minWaterLevel, double maxWaterLevel, bool manualOperations, int minValve, int maxValve);
+  State(String name, Led* led1, Led* led2, Sonar* sonar, ServoTimer2* motor, LCD* lcd, Potentiometer* pot, Button* btn, LCDState lcdState, int statusLed1, int statusLed2, double minWaterDistance, double maxWaterDistance, double WL_MIN, bool manualOperations, int minValve, int maxValve);
 
   void init(int period);
 
   void tick();
 
-  double minWaterLevel;
-  double maxWaterLevel;
+  double minWaterDistance;
+  double maxWaterDistance;
 
 protected:
 
@@ -54,22 +54,24 @@ protected:
 private:
   String name;
   ServoTimer2* motor;
-  Led* green;
-  Led* red;
+  Led* led1;
+  Led* led2;
   LCD* lcd;
+  Button* btn;
   Sonar* sonar;
   Potentiometer* pot;
   LCDState lcdState;
-  int statusGreen;
-  int statusRed;
+
+  int statusLed1;
+  int statusLed2;
   int valveDegrees;
   bool manualOperations;
   uint32_t prevTime;
-  Button* btn;
-  ManualMode manualMode;
-  blinkState blink;
+  double WL_MIN;
   int minValve;
   int maxValve;
+  ManualMode manualMode;
+  blinkState blink;
 };
 
 #endif
